@@ -89,7 +89,6 @@ import {
     MetaProperty,
     ModifierFlags,
     moveEmitHelpers,
-    NamedImports,
     Node,
     NodeFlags,
     ObjectLiteralElementLike,
