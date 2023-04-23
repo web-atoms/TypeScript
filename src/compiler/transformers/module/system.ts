@@ -596,8 +596,9 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
                                                 )
                                             )
                                         )
-                                    );            
-                                } else {
+                                    );
+                                }
+                                else {
                                     statements.push(
                                         factory.createExpressionStatement(
                                             factory.createAssignment(element.name,
@@ -607,7 +608,7 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
                                                 )
                                             )
                                         )
-                                    );            
+                                    );
                                 }
 
                                 if (hasSyntacticModifier(entry, ModifierFlags.Export)) {
@@ -625,7 +626,8 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
                                     );
                                 }
                             }
-                        } else {
+                        }
+                        else {
                             Debug.assert(entry.importClause.name !== undefined);
                             statements.push(
                                 factory.createExpressionStatement(
@@ -637,7 +639,7 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
                                     )
                                 )
                             );
-                            
+
                             if (hasSyntacticModifier(entry, ModifierFlags.Export)) {
                                 statements.push(
                                     factory.createExpressionStatement(
@@ -808,7 +810,8 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
         if (node.importClause) {
             if (node.importClause.name) {
                 hoistVariableDeclaration(node.importClause.name);
-            } else {
+            }
+            else {
                 if (node.importClause.namedBindings) {
                     for (const element of (node.importClause.namedBindings as NamedImports).elements) {
                         hoistVariableDeclaration(element.name);
