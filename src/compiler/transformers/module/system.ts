@@ -584,9 +584,9 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
                         // falls through
                         const namedBindings = entry.importClause.namedBindings;
                         if(namedBindings) {
-                            const name = entry.importClause.name;
-                            Debug.assert(name !== undefined);
                             if (namedBindings.kind === SyntaxKind.NamespaceImport) {
+                                const name = namedBindings.name;
+                                Debug.assert(name !== undefined);
                                 statements.push(
                                     factory.createExpressionStatement(
                                         factory.createAssignment(name,
@@ -827,7 +827,7 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
                 const namedBindings = node.importClause.namedBindings;
                 if (namedBindings) {
                     if (namedBindings.kind === SyntaxKind.NamespaceImport) {
-                        const name = node.importClause.name;
+                        const name = namedBindings.name;
                         Debug.assert(name !== undefined);
                         hoistVariableDeclaration(name);
                     }
