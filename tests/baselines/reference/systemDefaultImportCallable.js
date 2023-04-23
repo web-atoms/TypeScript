@@ -18,16 +18,16 @@ const _: string = repeat(new Date().toUTCString() + " ", 2);
 //// [greeter.js]
 System.register(["core-js/fn/string/repeat"], function (exports_1, context_1) {
     "use strict";
-    var repeat_1, _;
+    var repeat, _;
     var __moduleName = context_1 && context_1.id;
     return {
         setters: [
             function (repeat_1_1) {
-                repeat_1 = repeat_1_1;
+                repeat = repeat_1_1.default;
             }
         ],
         execute: function () {
-            _ = repeat_1.default(new Date().toUTCString() + " ", 2);
+            _ = repeat(new Date().toUTCString() + " ", 2);
         }
     };
 });

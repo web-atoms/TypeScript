@@ -27,7 +27,7 @@ import {
     firstOrUndefined,
     flattenDestructuringAssignment,
     FlattenLevel,
-//    forEach,
+    forEach,
     ForInitializer,
     ForInStatement,
     ForOfStatement,
@@ -36,7 +36,7 @@ import {
     getEmitFlags,
     getExternalHelpersModuleName,
     getExternalModuleNameLiteral,
-//    getLocalNameForExternalImport,
+    getLocalNameForExternalImport,
     getNodeId,
     getOriginalNode,
     getOriginalNodeId,
@@ -571,11 +571,10 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
     function createSettersArray(exportStarFunction: Identifier, dependencyGroups: DependencyGroup[]) {
         const setters: Expression[] = [];
         for (const group of dependencyGroups) {
-
-            const parameterName = factory.createUniqueName("");
+            const localName = forEach(group.externalImports, i => getLocalNameForExternalImport(factory, i, currentSourceFile));
+            const parameterName = localName ? factory.getGeneratedNameForNode(localName) : factory.createUniqueName("");
             const statements: Statement[] = [];
             for (const entry of group.externalImports) {
-
                 switch (entry.kind) {
                     case SyntaxKind.ImportDeclaration:
                         if (!entry.importClause) {
@@ -584,46 +583,60 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
                             break;
                         }
                         // falls through
-                        if(entry.importClause.namedBindings) {
-                            for (const element of (entry.importClause.namedBindings as NamedImports).elements) {
-                                if(element.propertyName) {
-                                    statements.push(
-                                        factory.createExpressionStatement(
-                                            factory.createAssignment(element.name,
-                                                factory.createPropertyAccessExpression(
-                                                    parameterName,
-                                                    element.propertyName
+                        const namedBindings = entry.importClause.namedBindings;
+                        if(namedBindings) {
+                            const name = entry.importClause.name;
+                            Debug.assert(name !== undefined);
+                            if (namedBindings.kind === SyntaxKind.NamespaceImport) {
+                                statements.push(
+                                    factory.createExpressionStatement(
+                                        factory.createAssignment(name,
+                                            parameterName,
+                                        )
+                                    )
+                                );
+                            }
+                            else {
+                                for (const element of namedBindings.elements) {
+                                    if(element.propertyName) {
+                                        statements.push(
+                                            factory.createExpressionStatement(
+                                                factory.createAssignment(element.name,
+                                                    factory.createPropertyAccessExpression(
+                                                        parameterName,
+                                                        element.propertyName
+                                                    )
                                                 )
                                             )
-                                        )
-                                    );
-                                }
-                                else {
-                                    statements.push(
-                                        factory.createExpressionStatement(
-                                            factory.createAssignment(element.name,
-                                                factory.createPropertyAccessExpression(
-                                                    parameterName,
-                                                    element.name
+                                        );
+                                    }
+                                    else {
+                                        statements.push(
+                                            factory.createExpressionStatement(
+                                                factory.createAssignment(element.name,
+                                                    factory.createPropertyAccessExpression(
+                                                        parameterName,
+                                                        element.name
+                                                    )
                                                 )
                                             )
-                                        )
-                                    );
-                                }
+                                        );
+                                    }
 
-                                if (hasSyntacticModifier(entry, ModifierFlags.Export)) {
-                                    statements.push(
-                                        factory.createExpressionStatement(
-                                            factory.createCallExpression(
-                                                exportFunction,
-                                                /*typeArguments*/ undefined,
-                                                [
-                                                    factory.createStringLiteral(idText(element.name)),
-                                                    element.name,
-                                                ]
+                                    if (hasSyntacticModifier(entry, ModifierFlags.Export)) {
+                                        statements.push(
+                                            factory.createExpressionStatement(
+                                                factory.createCallExpression(
+                                                    exportFunction,
+                                                    /*typeArguments*/ undefined,
+                                                    [
+                                                        factory.createStringLiteral(idText(element.name)),
+                                                        element.name,
+                                                    ]
+                                                )
                                             )
-                                        )
-                                    );
+                                        );
+                                    }
                                 }
                             }
                         }
@@ -812,9 +825,17 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
                 hoistVariableDeclaration(node.importClause.name);
             }
             else {
-                if (node.importClause.namedBindings) {
-                    for (const element of (node.importClause.namedBindings as NamedImports).elements) {
-                        hoistVariableDeclaration(element.name);
+                const namedBindings = node.importClause.namedBindings;
+                if (namedBindings) {
+                    const name = node.importClause.name;
+                    Debug.assert(name !== undefined);
+                    if (namedBindings.kind === SyntaxKind.NamespaceImport) {
+                        hoistVariableDeclaration(name);
+                    }
+                    else {
+                        for (const element of namedBindings.elements) {
+                            hoistVariableDeclaration(element.name);
+                        }
                     }
                 }
             }

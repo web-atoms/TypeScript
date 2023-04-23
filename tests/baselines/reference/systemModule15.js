@@ -56,14 +56,14 @@ System.register([], function (exports_1, context_1) {
 //// [file2.js]
 System.register(["./file3"], function (exports_1, context_1) {
     "use strict";
-    var moduleCStar, file3_1, file3_2;
+    var moduleCStar, moduleC, value;
     var __moduleName = context_1 && context_1.id;
     return {
         setters: [
             function (moduleCStar_1) {
                 moduleCStar = moduleCStar_1;
-                file3_1 = moduleCStar_1;
-                file3_2 = moduleCStar_1;
+                module2 = moduleCStar_1.default;
+                value = moduleCStar_1.value;
             }
         ],
         execute: function () {

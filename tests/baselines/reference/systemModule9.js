@@ -23,7 +23,7 @@ export {y as z};
 //// [systemModule9.js]
 System.register(["file1", "file2", "file3", "file4", "file5", "file6", "file7"], function (exports_1, context_1) {
     "use strict";
-    var ns, file2_1, file3_1, file5_1, ns3, x, y;
+    var ns, a, c, d, e, ns2, ns3, x, y;
     var __moduleName = context_1 && context_1.id;
     var exportedNames_1 = {
         "x": true,
@@ -39,18 +39,20 @@ System.register(["file1", "file2", "file3", "file4", "file5", "file6", "file7"],
     return {
         setters: [
             function (ns_1) {
-                ns = ns_1;
+                ns = ns_1.ns;
             },
             function (file2_1_1) {
-                file2_1 = file2_1_1;
+                a = file2_1_1.a;
+                c = file2_1_1.b;
             },
             function (file3_1_1) {
-                file3_1 = file3_1_1;
+                d = file3_1_1.d;
             },
             function (_1) {
             },
             function (file5_1_1) {
-                file5_1 = file5_1_1;
+                e = file5_1_1.e;
+                ns2 = file5_1_1.ns2;
             },
             function (ns3_1) {
                 ns3 = ns3_1;
@@ -61,10 +63,10 @@ System.register(["file1", "file2", "file3", "file4", "file5", "file6", "file7"],
         ],
         execute: function () {
             ns.f();
-            file2_1.a();
-            file2_1.b();
-            file3_1.default();
-            file5_1.default();
+            a();
+            c();
+            d();
+            e();
             ns2.f();
             ns3.f();
             y = true;
