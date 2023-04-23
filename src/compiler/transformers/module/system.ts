@@ -826,9 +826,9 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
             else {
                 const namedBindings = node.importClause.namedBindings;
                 if (namedBindings) {
-                    const name = node.importClause.name;
-                    Debug.assert(name !== undefined);
                     if (namedBindings.kind === SyntaxKind.NamespaceImport) {
+                        const name = node.importClause.name;
+                        Debug.assert(name !== undefined);
                         hoistVariableDeclaration(name);
                     }
                     else {
