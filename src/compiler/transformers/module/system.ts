@@ -572,7 +572,7 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
         for (const group of dependencyGroups) {
             // derive a unique name for parameter from the first named entry in the group
             const localName = forEach(group.externalImports, i => getLocalNameForExternalImport(factory, i, currentSourceFile));
-            const parameterName = localName ? factory.getGeneratedNameForNode(localName) : factory.createUniqueName("");
+            const parameterName = localName ? localName : factory.createUniqueName("");
             const statements: Statement[] = [];
             for (const entry of group.externalImports) {
                 const importVariableName = getLocalNameForExternalImport(factory, entry, currentSourceFile)!; // TODO: GH#18217
@@ -590,7 +590,11 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
                         // save import into the local
                         statements.push(
                             factory.createExpressionStatement(
-                                factory.createAssignment(importVariableName, parameterName)
+                                factory.createAssignment(
+                                    factory.createPropertyAccessExpression(importVariableName,parameterName),
+                                    isImportClause(entry)
+                                        ? factory.createIdentifier("default")
+                                        : parameterName)
                             )
                         );
                         if (hasSyntacticModifier(entry, ModifierFlags.Export)) {
@@ -1768,36 +1772,36 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
      * @param node The node to substitute.
      */
     function substituteShorthandPropertyAssignment(node: ShorthandPropertyAssignment) {
-        const name = node.name;
-        if (!isGeneratedIdentifier(name) && !isLocalName(name)) {
-            const importDeclaration = resolver.getReferencedImportDeclaration(name);
-            if (importDeclaration) {
-                if (isImportClause(importDeclaration)) {
-                    return setTextRange(
-                        factory.createPropertyAssignment(
-                            factory.cloneNode(name),
-                            factory.createPropertyAccessExpression(
-                                factory.getGeneratedNameForNode(importDeclaration.parent),
-                                factory.createIdentifier("default")
-                            )
-                        ),
-                        /*location*/ node
-                    );
-                }
-                else if (isImportSpecifier(importDeclaration)) {
-                    return setTextRange(
-                        factory.createPropertyAssignment(
-                            factory.cloneNode(name),
-                            factory.createPropertyAccessExpression(
-                                factory.getGeneratedNameForNode(importDeclaration.parent?.parent?.parent || importDeclaration),
-                                factory.cloneNode(importDeclaration.propertyName || importDeclaration.name)
-                            ),
-                        ),
-                        /*location*/ node
-                    );
-                }
-            }
-        }
+        // const name = node.name;
+        // if (!isGeneratedIdentifier(name) && !isLocalName(name)) {
+        //     const importDeclaration = resolver.getReferencedImportDeclaration(name);
+        //     if (importDeclaration) {
+        //         if (isImportClause(importDeclaration)) {
+        //             return setTextRange(
+        //                 factory.createPropertyAssignment(
+        //                     factory.cloneNode(name),
+        //                     factory.createPropertyAccessExpression(
+        //                         factory.getGeneratedNameForNode(importDeclaration.parent),
+        //                         factory.createIdentifier("default")
+        //                     )
+        //                 ),
+        //                 /*location*/ node
+        //             );
+        //         }
+        //         else if (isImportSpecifier(importDeclaration)) {
+        //             return setTextRange(
+        //                 factory.createPropertyAssignment(
+        //                     factory.cloneNode(name),
+        //                     factory.createPropertyAccessExpression(
+        //                         factory.getGeneratedNameForNode(importDeclaration.parent?.parent?.parent || importDeclaration),
+        //                         factory.cloneNode(importDeclaration.propertyName || importDeclaration.name)
+        //                     ),
+        //                 ),
+        //                 /*location*/ node
+        //             );
+        //         }
+        //     }
+        // }
         return node;
     }
 
@@ -1834,35 +1838,35 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
             return node;
         }
 
-        // When we see an identifier in an expression position that
-        // points to an imported symbol, we should substitute a qualified
-        // reference to the imported symbol if one is needed.
-        //
-        // - We do not substitute generated identifiers for any reason.
-        // - We do not substitute identifiers tagged with the LocalName flag.
-        if (!isGeneratedIdentifier(node) && !isLocalName(node)) {
-            const importDeclaration = resolver.getReferencedImportDeclaration(node);
-            if (importDeclaration) {
-                if (isImportClause(importDeclaration)) {
-                    return setTextRange(
-                        factory.createPropertyAccessExpression(
-                            factory.getGeneratedNameForNode(importDeclaration.parent),
-                            factory.createIdentifier("default")
-                        ),
-                        /*location*/ node
-                    );
-                }
-                else if (isImportSpecifier(importDeclaration)) {
-                    return setTextRange(
-                        factory.createPropertyAccessExpression(
-                            factory.getGeneratedNameForNode(importDeclaration.parent?.parent?.parent || importDeclaration),
-                            factory.cloneNode(importDeclaration.propertyName || importDeclaration.name)
-                        ),
-                        /*location*/ node
-                    );
-                }
-            }
-        }
+        // // When we see an identifier in an expression position that
+        // // points to an imported symbol, we should substitute a qualified
+        // // reference to the imported symbol if one is needed.
+        // //
+        // // - We do not substitute generated identifiers for any reason.
+        // // - We do not substitute identifiers tagged with the LocalName flag.
+        // if (!isGeneratedIdentifier(node) && !isLocalName(node)) {
+        //     const importDeclaration = resolver.getReferencedImportDeclaration(node);
+        //     if (importDeclaration) {
+        //         if (isImportClause(importDeclaration)) {
+        //             return setTextRange(
+        //                 factory.createPropertyAccessExpression(
+        //                     factory.getGeneratedNameForNode(importDeclaration.parent),
+        //                     factory.createIdentifier("default")
+        //                 ),
+        //                 /*location*/ node
+        //             );
+        //         }
+        //         else if (isImportSpecifier(importDeclaration)) {
+        //             return setTextRange(
+        //                 factory.createPropertyAccessExpression(
+        //                     factory.getGeneratedNameForNode(importDeclaration.parent?.parent?.parent || importDeclaration),
+        //                     factory.cloneNode(importDeclaration.propertyName || importDeclaration.name)
+        //                 ),
+        //                 /*location*/ node
+        //             );
+        //         }
+        //     }
+        // }
 
         return node;
     }
