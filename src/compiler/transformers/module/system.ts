@@ -327,12 +327,12 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
         // Will be transformed to:
         //
         //  function(exports) {
-        //      function foo() { return y + file_1.x(); }
+        //      function foo() { return y + x(); }
         //      exports("foo", foo);
-        //      var file_1, y;
+        //      var x, y;
         //      return {
         //          setters: [
-        //              function(v) { file_1 = v }
+        //              function(v) { x = v.x; }
         //          ],
         //          execute(): function() {
         //              y = 1;
@@ -570,12 +570,11 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
     function createSettersArray(exportStarFunction: Identifier, dependencyGroups: DependencyGroup[]) {
         const setters: Expression[] = [];
         for (const group of dependencyGroups) {
-            // derive a unique name for parameter from the first named entry in the group
-            const localName = forEach(group.externalImports, i => getLocalNameForExternalImport(factory, i, currentSourceFile));
-            const parameterName = localName ? localName : factory.createUniqueName("");
+
+            const parameterName = factory.createUniqueName("");
             const statements: Statement[] = [];
             for (const entry of group.externalImports) {
-                const importVariableName = getLocalNameForExternalImport(factory, entry, currentSourceFile)!; // TODO: GH#18217
+
                 switch (entry.kind) {
                     case SyntaxKind.ImportDeclaration:
                         if (!entry.importClause) {
@@ -584,19 +583,61 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
                             break;
                         }
                         // falls through
+                        if(entry.importClause.namedBindings) {
+                            for (const bindin of entry.namedBindings) {
+                                for (const element of binding.elements) {
+                                    if(element.propertyName) {
+                                        statements.push(
+                                            factory.createExpressionStatement(
+                                                factory.createAssignment(element.name,
+                                                    factory.createPropertyAccessExpression(
+                                                        parameterName,
+                                                        element.propertyName
+                                                    )
+                                                )
+                                            )
+                                        );            
+                                    } else {
+                                        statements.push(
+                                            factory.createExpressionStatement(
+                                                factory.createAssignment(element.name,
+                                                    factory.createPropertyAccessExpression(
+                                                        parameterName,
+                                                        element.name
+                                                    )
+                                                )
+                                            )
+                                        );            
+                                    }
+                                }
+                            }
+                        } else {
+                            statements.push(
+                                factory.createExpressionStatement(
+                                    factory.createAssignment(entry.importClause.name,
+                                        factory.createPropertyAccessExpression(
+                                            parameterName,
+                                            entry.importClause.name
+                                        )
+                                    )
+                                )
+                            );            
+                        }
 
                     case SyntaxKind.ImportEqualsDeclaration:
-                        Debug.assert(importVariableName !== undefined);
                         // save import into the local
-                        statements.push(
-                            factory.createExpressionStatement(
-                                factory.createAssignment(
-                                    factory.createPropertyAccessExpression(importVariableName,parameterName),
-                                    isImportClause(entry)
-                                        ? factory.createIdentifier("default")
-                                        : parameterName)
-                            )
-                        );
+                        if (entry.kind === SyntaxKind.ImportEqualsDeclaration) {
+                            statements.push(
+                                factory.createExpressionStatement(
+                                    factory.createAssignment(entry.name,
+                                        factory.createPropertyAccessExpression(
+                                            parameterName,
+                                            entry.moduleReference
+                                        )
+                                    )
+                                )
+                            );
+                        }
                         if (hasSyntacticModifier(entry, ModifierFlags.Export)) {
                             statements.push(
                                 factory.createExpressionStatement(
@@ -604,7 +645,7 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
                                         exportFunction,
                                         /*typeArguments*/ undefined,
                                         [
-                                            factory.createStringLiteral(idText(importVariableName)),
+                                            factory.createStringLiteral(idText(entry.name)),
                                             parameterName,
                                         ]
                                     )
@@ -613,8 +654,7 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
                         }
                         break;
 
-                    case SyntaxKind.ExportDeclaration:
-                        Debug.assert(importVariableName !== undefined);
+                        case SyntaxKind.ExportDeclaration:
                         if (entry.exportClause) {
                             if (isNamedExports(entry.exportClause)) {
                                 //  export {a, b as c} from 'foo'
@@ -735,7 +775,15 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
     function visitImportDeclaration(node: ImportDeclaration): VisitResult<Statement | undefined> {
         let statements: Statement[] | undefined;
         if (node.importClause) {
-            hoistVariableDeclaration(getLocalNameForExternalImport(factory, node, currentSourceFile)!); // TODO: GH#18217
+            if (node.importClause.name) {
+                hoistVariableDeclaration(node.importClause.name);
+            } else {
+                for (const binding of node.namedBindings) {
+                    for (const element of binding.elements) {
+                        hoistVariableDeclaration(element.name);
+                    }
+                }
+            }
         }
         return singleOrMany(appendExportsOfImportDeclaration(statements, node));
     }
@@ -754,7 +802,8 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
         Debug.assert(isExternalModuleImportEqualsDeclaration(node), "import= for internal module references should be handled in an earlier transformer.");
 
         let statements: Statement[] | undefined;
-        hoistVariableDeclaration(getLocalNameForExternalImport(factory, node, currentSourceFile)!); // TODO: GH#18217
+        // hoistVariableDeclaration(getLocalNameForExternalImport(factory, node, currentSourceFile)!); // TODO: GH#18217
+        hoistVariableDeclaration(node.name);
         return singleOrMany(appendExportsOfImportEqualsDeclaration(statements, node));
     }
 
