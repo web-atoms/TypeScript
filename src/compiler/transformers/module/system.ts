@@ -89,6 +89,7 @@ import {
     MetaProperty,
     ModifierFlags,
     moveEmitHelpers,
+    NamedImports,
     Node,
     NodeFlags,
     ObjectLiteralElementLike,
@@ -584,7 +585,7 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
                         }
                         // falls through
                         if(entry.importClause.namedBindings) {
-                            for (const element of entry.importClause.namedBindings.elements) {
+                            for (const element of (entry.importClause.namedBindings as NamedImports).elements) {
                                 if(element.propertyName) {
                                     statements.push(
                                         factory.createExpressionStatement(
@@ -608,8 +609,24 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
                                         )
                                     );            
                                 }
+
+                                if (hasSyntacticModifier(entry, ModifierFlags.Export)) {
+                                    statements.push(
+                                        factory.createExpressionStatement(
+                                            factory.createCallExpression(
+                                                exportFunction,
+                                                /*typeArguments*/ undefined,
+                                                [
+                                                    factory.createStringLiteral(idText(element.name)),
+                                                    element.name,
+                                                ]
+                                            )
+                                        )
+                                    );
+                                }
                             }
                         } else {
+                            Debug.assert(entry.importClause.name !== undefined);
                             statements.push(
                                 factory.createExpressionStatement(
                                     factory.createAssignment(entry.importClause.name,
@@ -619,8 +636,24 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
                                         )
                                     )
                                 )
-                            );            
+                            );
+                            
+                            if (hasSyntacticModifier(entry, ModifierFlags.Export)) {
+                                statements.push(
+                                    factory.createExpressionStatement(
+                                        factory.createCallExpression(
+                                            exportFunction,
+                                            /*typeArguments*/ undefined,
+                                            [
+                                                factory.createStringLiteral(idText(parameterName)),
+                                                parameterName,
+                                            ]
+                                        )
+                                    )
+                                );
+                            }
                         }
+                        break;
 
                     case SyntaxKind.ImportEqualsDeclaration:
                         // save import into the local
@@ -630,7 +663,7 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
                                     factory.createAssignment(entry.name,
                                         factory.createPropertyAccessExpression(
                                             parameterName,
-                                            entry.moduleReference
+                                            entry.moduleReference as Identifier
                                         )
                                     )
                                 )
@@ -777,7 +810,7 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
                 hoistVariableDeclaration(node.importClause.name);
             } else {
                 if (node.importClause.namedBindings) {
-                    for (const element of node.importClause.namedBindings.elements) {
+                    for (const element of (node.importClause.namedBindings as NamedImports).elements) {
                         hoistVariableDeclaration(element.name);
                     }
                 }
