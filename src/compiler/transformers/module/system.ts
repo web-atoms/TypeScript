@@ -584,31 +584,29 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
                         }
                         // falls through
                         if(entry.importClause.namedBindings) {
-                            for (const binding of entry.importClause.namedBindings) {
-                                for (const element of binding.elements) {
-                                    if(element.propertyName) {
-                                        statements.push(
-                                            factory.createExpressionStatement(
-                                                factory.createAssignment(element.name,
-                                                    factory.createPropertyAccessExpression(
-                                                        parameterName,
-                                                        element.propertyName
-                                                    )
+                            for (const element of entry.importClause.namedBindings.elements) {
+                                if(element.propertyName) {
+                                    statements.push(
+                                        factory.createExpressionStatement(
+                                            factory.createAssignment(element.name,
+                                                factory.createPropertyAccessExpression(
+                                                    parameterName,
+                                                    element.propertyName
                                                 )
                                             )
-                                        );            
-                                    } else {
-                                        statements.push(
-                                            factory.createExpressionStatement(
-                                                factory.createAssignment(element.name,
-                                                    factory.createPropertyAccessExpression(
-                                                        parameterName,
-                                                        element.name
-                                                    )
+                                        )
+                                    );            
+                                } else {
+                                    statements.push(
+                                        factory.createExpressionStatement(
+                                            factory.createAssignment(element.name,
+                                                factory.createPropertyAccessExpression(
+                                                    parameterName,
+                                                    element.name
                                                 )
                                             )
-                                        );            
-                                    }
+                                        )
+                                    );            
                                 }
                             }
                         } else {
@@ -778,8 +776,8 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
             if (node.importClause.name) {
                 hoistVariableDeclaration(node.importClause.name);
             } else {
-                for (const binding of node.importClause.namedBindings) {
-                    for (const element of binding.elements) {
+                if (node.importClause.namedBindings) {
+                    for (const element of node.importClause.namedBindings.elements) {
                         hoistVariableDeclaration(element.name);
                     }
                 }
