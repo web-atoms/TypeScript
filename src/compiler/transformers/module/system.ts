@@ -27,7 +27,7 @@ import {
     firstOrUndefined,
     flattenDestructuringAssignment,
     FlattenLevel,
-    forEach,
+//    forEach,
     ForInitializer,
     ForInStatement,
     ForOfStatement,
@@ -36,7 +36,7 @@ import {
     getEmitFlags,
     getExternalHelpersModuleName,
     getExternalModuleNameLiteral,
-    getLocalNameForExternalImport,
+//    getLocalNameForExternalImport,
     getNodeId,
     getOriginalNode,
     getOriginalNodeId,
@@ -68,9 +68,9 @@ import {
     isHeritageClause,
     isIdentifier,
     isImportCall,
-    isImportClause,
+//     isImportClause,
     isImportMeta,
-    isImportSpecifier,
+//    isImportSpecifier,
     isLocalName,
     isModifierLike,
     isNamedExports,
@@ -584,7 +584,7 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
                         }
                         // falls through
                         if(entry.importClause.namedBindings) {
-                            for (const bindin of entry.namedBindings) {
+                            for (const binding of entry.importClause.namedBindings) {
                                 for (const element of binding.elements) {
                                     if(element.propertyName) {
                                         statements.push(
@@ -778,7 +778,7 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
             if (node.importClause.name) {
                 hoistVariableDeclaration(node.importClause.name);
             } else {
-                for (const binding of node.namedBindings) {
+                for (const binding of node.importClause.namedBindings) {
                     for (const element of binding.elements) {
                         hoistVariableDeclaration(element.name);
                     }
